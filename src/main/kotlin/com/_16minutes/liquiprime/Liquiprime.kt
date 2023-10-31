@@ -9,9 +9,6 @@ import com._16minutes.liquiprime.tasks.PrimeDatabases
 import org.gradle.api.Project
 import org.gradle.api.Plugin
 
-/**
- * A simple 'hello world' plugin.
- */
 class Liquiprime: Plugin<Project> {
     enum class TaskName(val value: String) {
         PRIME_DATABASES("liquiprimePrimeDatabases")

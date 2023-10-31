@@ -27,7 +27,7 @@ class DatabasePrimerOutputValidator(
         primerExecutionSettings: LiquiprimeExtension.PrimerExecutionSettings,
         primerSystemProperties: Map<String, String>,
         primerEnvironmentVariables: Map<String, String>
-    ): String? {
+    ): String {
         val activityName = primerExecutionSettings.name
 
         val databaseUrlSystemPropertyName =

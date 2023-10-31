@@ -1,7 +1,5 @@
 package com._16minutes.liquiprime.util
 
-import java.security.AccessController
-import java.security.PrivilegedAction
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.*

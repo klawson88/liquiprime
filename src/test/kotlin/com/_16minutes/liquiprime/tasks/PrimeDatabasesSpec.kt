@@ -40,7 +40,7 @@ class PrimeDatabasesSpec: DescribeSpec({
             primerExecutionSettingsList: List<PrimerExecutionSettings>,
             primerTaskSystemProperties: Map<String, String>,
             primerTaskEnvironmentVariables: Map<String, String>,
-            expectedDatabasePrimingOutcome: DatabasePrimerOutputValidator.DatabasePrimingOutcome
+            expectedDatabasePrimingOutcome: DatabasePrimingOutcome
         ) {
             val taskName = Liquiprime.TaskName.PRIME_DATABASES
             val liquiprimeExtensionStr = primerExecutionSettingsList.joinToString("\\n") {"""
@@ -208,5 +208,4 @@ class PrimeDatabasesSpec: DescribeSpec({
             )
         }
     }
-}) {
-}
+})

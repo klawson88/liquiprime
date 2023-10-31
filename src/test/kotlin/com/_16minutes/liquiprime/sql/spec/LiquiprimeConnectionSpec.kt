@@ -196,7 +196,7 @@ class LiquiprimeConnectionSpec: DescribeSpec({
 
             cut.commit()
 
-            outputFile.readText().shouldBe(statementText);
+            outputFile.readText().shouldBe(statementText)
         }
     }
 
