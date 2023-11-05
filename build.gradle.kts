@@ -6,7 +6,7 @@ plugins {
     `java-gradle-plugin`
 }
 
-group = "com._16minutes"
+group = "io.github.klawson88"
 version = "1.0"
 
 gradlePlugin {
@@ -14,7 +14,7 @@ gradlePlugin {
         create("liquiprime") {
             val pluginNamePackageFormat = name.replace("-", "_")
 
-            id = "com._16minutes.liquiprime"
+            id = "io.github.klawson88.liquiprime"
             implementationClass = "com._16minutes.liquiprime.Liquiprime"
             displayName = "Liquiprime"
             description = """A Gradle plugin which provides the ability to perform operations on databases

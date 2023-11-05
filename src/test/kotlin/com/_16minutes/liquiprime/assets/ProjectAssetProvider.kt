@@ -20,7 +20,7 @@ class ProjectAssetProvider(assetGroupId: String) {
             import com._16minutes.liquiprime.settings.LiquiprimeExtension
             
             plugins {
-                id("com._16minutes.liquiprime")
+                id("io.github.klawson88.liquiprime")
             }
         """.trimIndent()
 
