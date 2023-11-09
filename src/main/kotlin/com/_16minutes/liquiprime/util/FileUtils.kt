@@ -97,7 +97,7 @@ fun parseQueryLanguageFileStatements(inputStream: InputStream): List<String> {
         currentCharInt = inputStreamReader.read()
     }
 
-    if (currentStatementStringBuilder.isNotEmpty()) {
+    if (currentStatementStringBuilder.isNotBlank()) {
         statements.add(currentStatementStringBuilder.toString().trim())
         currentStatementStringBuilder.clear()
     }
