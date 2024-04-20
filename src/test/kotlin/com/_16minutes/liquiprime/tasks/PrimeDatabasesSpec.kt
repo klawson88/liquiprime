@@ -138,8 +138,9 @@ class PrimeDatabasesSpec: DescribeSpec({
         }
 
         it("""primes databases as specified by each of the execution settings in the plugin extension,
-            | using the first drivers that are respectively associated with JDBC URLs in the aforementioned
-            | settings that it can find in the liquibaseRuntime configuration""".trimMargin()) {
+            | using the first drivers that are respectively associated with JDBC URLs in 
+            | the aforementioned settings that it can find in the liquibaseRuntime configuration, 
+            | and the (implicitly specified) default connection auto-commit setting""".trimMargin()) {
             val primerExecutionSettings = PrimerExecutionSettings(
                 "test",
                 PrimerExecutionSettings.ConnectionSettings(databaseUrl = databaseUrl, driverClassName = null),
@@ -155,12 +156,89 @@ class PrimeDatabasesSpec: DescribeSpec({
             )
         }
 
+        it("""primes databases as specified by each of the execution settings in the plugin extension,
+            | using the first drivers that are respectively associated with JDBC URLs in 
+            | the aforementioned settings that it can find in the liquibaseRuntime configuration, 
+            | and an explicit connection auto-commit setting of false""".trimMargin()) {
+            val primerExecutionSettings = PrimerExecutionSettings(
+                "test",
+                PrimerExecutionSettings.ConnectionSettings(databaseUrl = databaseUrl, driverClassName = null, doEnableAutoCommit = false),
+                PrimerExecutionSettings.PrimerSettings(listOf(projectAssetProvider.primerFile.absolutePath))
+            )
+            val primerTaskSystemProperties = mapOf("jdbc.drivers" to "com._16minutes.liquiprime.sql.LiquiprimeDriver")
+
+            validatePrimeDatabaseTaskRun(
+                primerExecutionSettingsList = listOf(primerExecutionSettings),
+                primerTaskSystemProperties = primerTaskSystemProperties,
+                primerTaskEnvironmentVariables = emptyMap(),
+                expectedDatabasePrimingOutcome = DatabasePrimingOutcome.SUCCESS
+            )
+        }
+
+        it("""primes databases as specified by each of the execution settings in the plugin extension,
+            | using the first drivers that are respectively associated with JDBC URLs in 
+            | the aforementioned settings that it can find in the liquibaseRuntime configuration, 
+            | and an explicit connection auto-commit setting of true""".trimMargin()) {
+            val primerExecutionSettings = PrimerExecutionSettings(
+                "test",
+                PrimerExecutionSettings.ConnectionSettings(databaseUrl = databaseUrl, driverClassName = null, doEnableAutoCommit = true),
+                PrimerExecutionSettings.PrimerSettings(listOf(projectAssetProvider.primerFile.absolutePath))
+            )
+            val primerTaskSystemProperties = mapOf("jdbc.drivers" to "com._16minutes.liquiprime.sql.LiquiprimeDriver")
+
+            validatePrimeDatabaseTaskRun(
+                primerExecutionSettingsList = listOf(primerExecutionSettings),
+                primerTaskSystemProperties = primerTaskSystemProperties,
+                primerTaskEnvironmentVariables = emptyMap(),
+                expectedDatabasePrimingOutcome = DatabasePrimingOutcome.SUCCESS
+            )
+        }
+
         it("""primes databases as specified by each of the execution settings in the 
             | plugin extension, using the explicitly specified drivers in those settings
-            | that it can find in the liquibaseRuntime configuration""".trimMargin()) {
+            | that it can find in the liquibaseRuntime configuration, and the (implicitly 
+            | specified) default connection auto-commit setting""".trimMargin()) {
             val primerExecutionSettings = PrimerExecutionSettings(
                 "test",
                 PrimerExecutionSettings.ConnectionSettings(databaseUrl, LiquiprimeDriver::class.java.name),
+                PrimerExecutionSettings.PrimerSettings(listOf(projectAssetProvider.primerFile.absolutePath))
+            )
+            val primerTaskSystemProperties = mapOf("jdbc.drivers" to "com._16minutes.liquiprime.sql.LiquiprimeDriver")
+
+            validatePrimeDatabaseTaskRun(
+                primerExecutionSettingsList = listOf(primerExecutionSettings),
+                primerTaskSystemProperties = primerTaskSystemProperties,
+                primerTaskEnvironmentVariables = emptyMap(),
+                expectedDatabasePrimingOutcome = DatabasePrimingOutcome.SUCCESS
+            )
+        }
+
+        it("""primes databases as specified by each of the execution settings in the 
+            | plugin extension, using the explicitly specified drivers in those
+            | settings that it can find in the liquibaseRuntime configuration, 
+            | and an explicit connection auto-commit setting of false""".trimMargin()) {
+            val primerExecutionSettings = PrimerExecutionSettings(
+                "test",
+                PrimerExecutionSettings.ConnectionSettings(databaseUrl, LiquiprimeDriver::class.java.name, false),
+                PrimerExecutionSettings.PrimerSettings(listOf(projectAssetProvider.primerFile.absolutePath))
+            )
+            val primerTaskSystemProperties = mapOf("jdbc.drivers" to "com._16minutes.liquiprime.sql.LiquiprimeDriver")
+
+            validatePrimeDatabaseTaskRun(
+                primerExecutionSettingsList = listOf(primerExecutionSettings),
+                primerTaskSystemProperties = primerTaskSystemProperties,
+                primerTaskEnvironmentVariables = emptyMap(),
+                expectedDatabasePrimingOutcome = DatabasePrimingOutcome.SUCCESS
+            )
+        }
+
+        it("""primes databases as specified by each of the execution settings in the 
+            | plugin extension, using the explicitly specified drivers in those
+            | settings that it can find in the liquibaseRuntime configuration, 
+            | and an explicit connection auto-commit setting of true""".trimMargin()) {
+            val primerExecutionSettings = PrimerExecutionSettings(
+                "test",
+                PrimerExecutionSettings.ConnectionSettings(databaseUrl, LiquiprimeDriver::class.java.name, true),
                 PrimerExecutionSettings.PrimerSettings(listOf(projectAssetProvider.primerFile.absolutePath))
             )
             val primerTaskSystemProperties = mapOf("jdbc.drivers" to "com._16minutes.liquiprime.sql.LiquiprimeDriver")

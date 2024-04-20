@@ -43,9 +43,13 @@ open class PrimeDatabases @Inject constructor (
                     }
                 }
 
-                connection.commit()
+                if (!connection.autoCommit) {
+                    connection.commit()
+                }
             } catch (exception: SQLException) {
-                connection.rollback()
+                if (!connection.autoCommit) {
+                    connection.rollback()
+                }
 
                 throw exception
             }
@@ -70,14 +74,13 @@ open class PrimeDatabases @Inject constructor (
                 }
 
                 createConnection(effectiveDatabaseUrl, effectiveDriverClassName, driverProperties).use { connection ->
-                    connection.autoCommit = false
+                    connection.autoCommit = connectionSettings.doEnableAutoCommit
 
                     val primerSettings = parameters.primerSettings.get()
                     primerSettings.primerFilePaths.forEach { primerFilePath ->
                         val canonicalPrimerFilePath =
                             Paths.get(parameters.projectDirectoryPath.get()).resolve(primerFilePath).normalize()
                         currentPrimerFilePath = canonicalPrimerFilePath.toString()
-
 
                         executePrimerFileStatements(connection, canonicalPrimerFilePath.toFile())
                     }

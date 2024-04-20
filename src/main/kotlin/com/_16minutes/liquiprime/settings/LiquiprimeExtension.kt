@@ -4,39 +4,22 @@ import org.gradle.api.NamedDomainObjectContainer
 import java.io.Serializable
 
 open class LiquiprimeExtension(val primerExecutionSettingsByActivity: NamedDomainObjectContainer<PrimerExecutionSettings>) {
-    /*
-    liquiprime {
-        primerExecutionSettingsByActivity {
-            register("main") {
-                jdbcUrl = "jdbc:mysql://127.0.0.1:3306/example"
-                driverClassName = "java.driver.Foo"
-                primerFilePaths = arrayOf("/foo/bar")
-            }
-
-            register("main") {
-                connectionSettings {
-                    jdbcUrl = "jdbc:mysql://127.0.0.1:3306/example"
-                    driverClassName = "java.driver.Foo"
-                }
-
-                primerSettings {
-                    primerFilePaths = arrayOf("/foo/bar")
-                }
-            }
-        }
-    }
-
-     */
-
-
     open class PrimerExecutionSettings(
         val name: String,
         val connectionSettings: ConnectionSettings,
         val primerSettings: PrimerSettings
     ) {
-        class ConnectionSettings(var databaseUrl: String?, var driverClassName: String?): Serializable {
+        class ConnectionSettings(
+            var databaseUrl: String?,
+            var driverClassName: String?,
+            var doEnableAutoCommit: Boolean = Defaults.DO_ENABLE_AUTO_COMMIT
+        ): Serializable {
             companion object {
-                private const val serialVersionUID = 1L
+                private const val serialVersionUID = 2L
+            }
+
+            object Defaults {
+                const val DO_ENABLE_AUTO_COMMIT = false
             }
             constructor(): this(null, null)
 
@@ -50,6 +33,8 @@ open class LiquiprimeExtension(val primerExecutionSettingsByActivity: NamedDomai
                 if (driverClassName != null) {
                     strBuilder.appendLine("""driverClassName = "$driverClassName"""")
                 }
+
+                strBuilder.appendLine("""doEnableAutoCommit = $doEnableAutoCommit""")
 
                 return strBuilder.toString()
             }
