@@ -12,11 +12,8 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import java.io.File
-import java.net.URL
-import java.net.URLClassLoader
 import java.nio.file.Paths
 import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.SQLException
 import java.util.*
 import javax.inject.Inject
@@ -50,13 +47,13 @@ open class PrimeDatabases @Inject constructor (
                 if (!connection.autoCommit) {
                     connection.rollback()
                 }
-
                 throw exception
             }
         }
         override fun execute() {
             val activityName = parameters.activityName.get()
             var currentPrimerFilePath: String? = null
+            var doesConnectionExist = false
 
             try {
                 val connectionSettings = parameters.connectionSettings.get()
@@ -74,6 +71,7 @@ open class PrimeDatabases @Inject constructor (
                 }
 
                 createConnection(effectiveDatabaseUrl, effectiveDriverClassName, driverProperties).use { connection ->
+                    doesConnectionExist = true
                     connection.autoCommit = connectionSettings.doEnableAutoCommit
 
                     val primerSettings = parameters.primerSettings.get()
@@ -86,10 +84,17 @@ open class PrimeDatabases @Inject constructor (
                     }
                 }
             } catch(exception: Exception) {
-                val exceptionMessage =
-                    LiquiprimePrimeDatabasesException.createMessage(activityName, currentPrimerFilePath)
+                val executionExceptionSuppressionSettings = parameters.connectionSettings.get().executionExceptionSuppressionSettings
 
-                throw LiquiprimePrimeDatabasesException(exceptionMessage, exception)
+                if (!doesConnectionExist
+                    || executionExceptionSuppressionSettings == null
+                    || (executionExceptionSuppressionSettings.exceptionMessageFilters != null
+                        && executionExceptionSuppressionSettings.exceptionMessageFilters?.none{exception.message?.contains(it) == true} == true)) {
+                    val exceptionMessage =
+                        LiquiprimePrimeDatabasesException.createMessage(activityName, currentPrimerFilePath)
+
+                    throw LiquiprimePrimeDatabasesException(exceptionMessage, exception)
+                }
             }
         }
     }

@@ -19,6 +19,7 @@ class DatabasePrimerOutputValidator(
 ) {
     enum class DatabasePrimingOutcome(val validationOutputLineTemplate: String?) {
         SUCCESS(null),
+        SUCCESS_WITH_SWALLOWED_EXCEPTION(null),
         SETUP_FAILURE(LiquiprimePrimeDatabasesException.SETUP_FAILURE_MESSAGE_TEMPLATE),
         EXECUTION_FAILURE(LiquiprimePrimeDatabasesException.EXECUTION_FAILURE_MESSAGE_TEMPLATE)
     }

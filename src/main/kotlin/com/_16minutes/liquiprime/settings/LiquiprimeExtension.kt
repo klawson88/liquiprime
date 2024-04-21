@@ -12,14 +12,42 @@ open class LiquiprimeExtension(val primerExecutionSettingsByActivity: NamedDomai
         class ConnectionSettings(
             var databaseUrl: String?,
             var driverClassName: String?,
+            var executionExceptionSuppressionSettings: ExecutionExceptionSuppressionSettings? = Defaults.EXECUTION_EXCEPTION_SUPPRESSION_SETTINGS,
             var doEnableAutoCommit: Boolean = Defaults.DO_ENABLE_AUTO_COMMIT
         ): Serializable {
+            class ExecutionExceptionSuppressionSettings(var exceptionMessageFilters: List<String>?): Serializable {
+                companion object {
+                    private const val serialVersionUID = 1L
+                }
+
+                object Defaults {
+                    val EXCEPTION_MESSAGE_FILTERS = mutableListOf<String>()
+                }
+
+                constructor(): this(Defaults.EXCEPTION_MESSAGE_FILTERS)
+
+                override fun toString(): String {
+                    val strBuilder = StringBuilder()
+
+                    val exceptionMessageFiltersStr = exceptionMessageFilters?.joinToString(", ") { """"$it"""" }
+
+                    if (exceptionMessageFiltersStr != null) {
+                        strBuilder.appendLine("exceptionMessageFilters = listOf($exceptionMessageFiltersStr)")
+                    } else {
+                        strBuilder.appendLine("exceptionMessageFilters = null")
+                    }
+
+                    return strBuilder.toString()
+                }
+            }
+
             companion object {
-                private const val serialVersionUID = 2L
+                private const val serialVersionUID = 3L
             }
 
             object Defaults {
                 const val DO_ENABLE_AUTO_COMMIT = false
+                val EXECUTION_EXCEPTION_SUPPRESSION_SETTINGS = null
             }
             constructor(): this(null, null)
 
@@ -34,9 +62,26 @@ open class LiquiprimeExtension(val primerExecutionSettingsByActivity: NamedDomai
                     strBuilder.appendLine("""driverClassName = "$driverClassName"""")
                 }
 
+                if (executionExceptionSuppressionSettings != null) {
+                    val executionExceptionSuppressionSettingsStr = executionExceptionSuppressionSettings.toString()
+
+                    strBuilder.appendLine("""
+                        executionExceptionSuppressionSettings {
+                            $executionExceptionSuppressionSettingsStr
+                        }
+                    """.trimMargin())
+                }
+
                 strBuilder.appendLine("""doEnableAutoCommit = $doEnableAutoCommit""")
 
                 return strBuilder.toString()
+            }
+
+            fun executionExceptionSuppressionSettings(configure: ExecutionExceptionSuppressionSettings.() -> Unit) {
+                val localExecutionExceptionSuppressionSettings = executionExceptionSuppressionSettings ?: ExecutionExceptionSuppressionSettings()
+                localExecutionExceptionSuppressionSettings.configure()
+
+                executionExceptionSuppressionSettings = localExecutionExceptionSuppressionSettings
             }
         }
 
