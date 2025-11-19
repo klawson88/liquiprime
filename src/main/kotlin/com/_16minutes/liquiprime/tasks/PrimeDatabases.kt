@@ -1,5 +1,6 @@
 package com._16minutes.liquiprime.tasks
 
+import com._16minutes.liquiprime.settings.LiquiprimeDeserializableRuntimeParameter
 import com._16minutes.liquiprime.settings.LiquiprimeExtension
 import com._16minutes.liquiprime.settings.LiquiprimeRuntimeParameter
 import com._16minutes.liquiprime.tasks.exceptions.LiquiprimePrimeDatabasesException
@@ -56,31 +57,35 @@ open class PrimeDatabases @Inject constructor (
             var doesConnectionExist = false
 
             try {
-                val connectionSettings = parameters.connectionSettings.get()
+                val targetActivities = LiquiprimeDeserializableRuntimeParameter.TARGET_ACTIVITIES.getDeserializedValue();
 
-                val databaseUrlRuntimeParameter =  LiquiprimeRuntimeParameter.DATABASE_URL.getValueFor(activityName)
-                val effectiveDatabaseUrl = databaseUrlRuntimeParameter ?: connectionSettings.databaseUrl
+                if (targetActivities == null || targetActivities.contains(activityName)) {
+                    val connectionSettings = parameters.connectionSettings.get()
 
-                val driverClassNameRuntimeParameter = LiquiprimeRuntimeParameter.DRIVER.getValueFor(activityName)
-                val effectiveDriverClassName = driverClassNameRuntimeParameter ?: connectionSettings.driverClassName
+                    val databaseUrlRuntimeParameter =  LiquiprimeRuntimeParameter.DATABASE_URL.getValueFor(activityName)
+                    val effectiveDatabaseUrl = databaseUrlRuntimeParameter ?: connectionSettings.databaseUrl
 
-                val driverProperties = Properties()
-                LiquiprimeRuntimeParameter.DRIVER_PROPERTIES_FILE.getValueFor(activityName)?.let {
-                    val driverPropertiesInputStream = File(it).inputStream()
-                    driverProperties.load(driverPropertiesInputStream)
-                }
+                    val driverClassNameRuntimeParameter = LiquiprimeRuntimeParameter.DRIVER.getValueFor(activityName)
+                    val effectiveDriverClassName = driverClassNameRuntimeParameter ?: connectionSettings.driverClassName
 
-                createConnection(effectiveDatabaseUrl, effectiveDriverClassName, driverProperties).use { connection ->
-                    doesConnectionExist = true
-                    connection.autoCommit = connectionSettings.doEnableAutoCommit
+                    val driverProperties = Properties()
+                    LiquiprimeRuntimeParameter.DRIVER_PROPERTIES_FILE.getValueFor(activityName)?.let {
+                        val driverPropertiesInputStream = File(it).inputStream()
+                        driverProperties.load(driverPropertiesInputStream)
+                    }
 
-                    val primerSettings = parameters.primerSettings.get()
-                    primerSettings.primerFilePaths.forEach { primerFilePath ->
-                        val canonicalPrimerFilePath =
-                            Paths.get(parameters.projectDirectoryPath.get()).resolve(primerFilePath).normalize()
-                        currentPrimerFilePath = canonicalPrimerFilePath.toString()
+                    createConnection(effectiveDatabaseUrl, effectiveDriverClassName, driverProperties).use { connection ->
+                        doesConnectionExist = true
+                        connection.autoCommit = connectionSettings.doEnableAutoCommit
 
-                        executePrimerFileStatements(connection, canonicalPrimerFilePath.toFile())
+                        val primerSettings = parameters.primerSettings.get()
+                        primerSettings.primerFilePaths.forEach { primerFilePath ->
+                            val canonicalPrimerFilePath =
+                                Paths.get(parameters.projectDirectoryPath.get()).resolve(primerFilePath).normalize()
+                            currentPrimerFilePath = canonicalPrimerFilePath.toString()
+
+                            executePrimerFileStatements(connection, canonicalPrimerFilePath.toFile())
+                        }
                     }
                 }
             } catch(exception: Exception) {

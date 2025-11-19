@@ -5,11 +5,11 @@ import com._16minutes.liquiprime.env.StandardEnvironmentVariableLoader
 import com._16minutes.liquiprime.properties.StandardSystemPropertyLoader
 import com._16minutes.liquiprime.properties.SystemPropertyLoader
 
-class LiquiprimeRuntimeParameter(
-    val systemPropertyTemplate: String,
-    val environmentVariableTemplate: String,
+open class LiquiprimeRuntimeParameter(
+    val systemPropertyNameOrTemplate: String,
+    val environmentVariableNameOrTemplate: String,
     private val systemPropertyLoader: SystemPropertyLoader = StandardSystemPropertyLoader(),
-    private val environmentVariableLoader: EnvironmentVariableLoader = StandardEnvironmentVariableLoader()
+    private val environmentVariableLoader: EnvironmentVariableLoader = StandardEnvironmentVariableLoader(),
 ) {
     companion object {
         val DRIVER_PROPERTIES_FILE = LiquiprimeRuntimeParameter(
@@ -34,14 +34,19 @@ class LiquiprimeRuntimeParameter(
      * location order of preference (https://tinyurl.com/yc2x3kn8).
      */
     fun getValueFor(activityName: String): String? {
-        val activitySystemPropertyName = String.format(systemPropertyTemplate, activityName)
+        val activitySystemPropertyName = String.format(systemPropertyNameOrTemplate, activityName)
         val activitySystemProperty = systemPropertyLoader.load(activitySystemPropertyName)
 
         if (activitySystemProperty == null) {
-            val activityEnvironmentVariableName = String.format(environmentVariableTemplate, activityName)
+            val activityEnvironmentVariableName = String.format(environmentVariableNameOrTemplate, activityName)
             return environmentVariableLoader.get(activityEnvironmentVariableName)
         } else {
             return activitySystemProperty
         }
+    }
+
+    fun getValue(): String? {
+        return systemPropertyLoader.load(systemPropertyNameOrTemplate)
+            ?: environmentVariableLoader.get(environmentVariableNameOrTemplate)
     }
 }

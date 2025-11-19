@@ -22,7 +22,7 @@ kotlin {
 }
 
 group = "io.github.klawson88"
-version = "1.3.1"
+version = "1.4.1"
 
 gradlePlugin {
     plugins {
@@ -46,6 +46,10 @@ repositories {
 dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:5.7.2") {
         because("it (Kotest) is the framework with which the plugin will be tested")
+    }
+
+    testImplementation("io.kotest:kotest-framework-datatest:5.7.2") {
+        because("""it (Kotest datatest framework) enables the creation of data-driven tests""")
     }
 
     testImplementation("io.kotest:kotest-assertions-core:5.7.2") {

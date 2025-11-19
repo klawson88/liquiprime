@@ -1,5 +1,6 @@
 package com._16minutes.liquiprime.tasks.validators
 
+import com._16minutes.liquiprime.settings.LiquiprimeDeserializableRuntimeParameter
 import com._16minutes.liquiprime.settings.LiquiprimeExtension
 import com._16minutes.liquiprime.settings.LiquiprimeRuntimeParameter
 import com._16minutes.liquiprime.sql.LiquiprimeDriver
@@ -32,11 +33,11 @@ class DatabasePrimerOutputValidator(
         val activityName = primerExecutionSettings.name
 
         val databaseUrlSystemPropertyName =
-            String.format(LiquiprimeRuntimeParameter.DATABASE_URL.systemPropertyTemplate, activityName)
+            String.format(LiquiprimeRuntimeParameter.DATABASE_URL.systemPropertyNameOrTemplate, activityName)
         val databaseUrlSystemProperty = primerSystemProperties[databaseUrlSystemPropertyName]
 
         val databaseUrlEnvironmentVariableName =
-            String.format(LiquiprimeRuntimeParameter.DATABASE_URL.environmentVariableTemplate, activityName)
+            String.format(LiquiprimeRuntimeParameter.DATABASE_URL.environmentVariableNameOrTemplate, activityName)
         val databaseUrlEnvironmentVariable = primerEnvironmentVariables[databaseUrlEnvironmentVariableName]
 
         return listOf(
@@ -46,6 +47,21 @@ class DatabasePrimerOutputValidator(
         ).firstNotNullOf{
             it
         }
+    }
+
+    private fun getEffectiveTargetActivities(
+        primerSystemProperties: Map<String, String>,
+        primerEnvironmentVariables: Map<String, String>
+    ): HashSet<String>? {
+        val targetActivitiesSystemPropertyName =
+            LiquiprimeDeserializableRuntimeParameter.TARGET_ACTIVITIES.systemPropertyNameOrTemplate
+        val targetActivitiesSystemProperty = primerSystemProperties[targetActivitiesSystemPropertyName]
+
+        val targetActivitiesEnvironmentVariableName =
+            LiquiprimeDeserializableRuntimeParameter.TARGET_ACTIVITIES.environmentVariableNameOrTemplate
+        val targetActivitiesEnvironmentVariable = primerEnvironmentVariables[targetActivitiesEnvironmentVariableName]
+
+        return (targetActivitiesSystemProperty ?: targetActivitiesEnvironmentVariable)?.split(',')?.toHashSet();
     }
 
 
@@ -59,19 +75,28 @@ class DatabasePrimerOutputValidator(
             val databaseUrlMatcher = LiquiprimeDriver.URL_PATTERN.matcher(effectiveDatabaseUrl)
 
             if (databaseUrlMatcher.matches()) {
+                val effectiveTargetActivities = getEffectiveTargetActivities(
+                    primerSystemProperties,
+                    primerEnvironmentVariables
+                )
+
                 val urlLocationComponent =
                     databaseUrlMatcher.group(LiquiprimeDriver.URL_REGEX_LOCATION_COMPONENT_CAPTURING_GROUP_NAME)
 
                 val actualDatabaseContents = File(urlLocationComponent).readText()
 
                 val expectedDatabaseContents =
-                    primerExecutionSettings
-                        .primerSettings
-                        .primerFilePaths
-                        .asSequence()
-                        .map{ Paths.get(projectDirectory.absolutePath).resolve(it).toFile() }
-                        .map{ it.readText() }
-                        .joinToString("\\n")
+                    if (effectiveTargetActivities == null || effectiveTargetActivities.contains(activityName)) {
+                        primerExecutionSettings
+                            .primerSettings
+                            .primerFilePaths
+                            .asSequence()
+                            .map{ Paths.get(projectDirectory.absolutePath).resolve(it).toFile() }
+                            .map{ it.readText() }
+                            .joinToString("\\n")
+                    } else {
+                        ""
+                    }
 
                 actualDatabaseContents.shouldBe(expectedDatabaseContents)
             } else {

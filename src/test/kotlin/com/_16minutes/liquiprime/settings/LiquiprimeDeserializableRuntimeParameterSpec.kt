@@ -1,51 +1,61 @@
 package com._16minutes.liquiprime.settings
 
+import com._16minutes.liquiprime.env.EnvironmentVariableLoader
+import com._16minutes.liquiprime.properties.SystemPropertyLoader
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.mockk.every
 import io.mockk.mockk
-import com._16minutes.liquiprime.env.EnvironmentVariableLoader
-import com._16minutes.liquiprime.properties.SystemPropertyLoader
-import java.util.*
+import java.util.Objects
 
-class LiquiprimeRuntimeParameterSpec: DescribeSpec({
-    describe("getValueFor") {
-        fun performTest(systemPropertyValue: String?, environmentVariableValue: String?, expectedValue: String?) {
+class LiquiprimeDeserializableRuntimeParameterSpec: DescribeSpec ({
+    describe("getDeserializedValueFor") {
+        fun <T> performTest(
+            systemPropertyValue: String?,
+            environmentVariableValue: String?,
+            expectedDeserializedValue: T?
+        ) {
             val activityName = "foo"
             val systemPropertyNameTemplate = "liquiprime.%s.test"
             val systemPropertyName = String.format(systemPropertyNameTemplate, activityName)
             val environmentVariableNameTemplate = "LIQUIPRIME_%s_TEST"
             val environmentVariableName = String.format(environmentVariableNameTemplate, activityName)
+            val deserializer = mockk<(String) -> T>()
             val systemPropertyLoader = mockk<SystemPropertyLoader>()
             every { systemPropertyLoader.load(systemPropertyName) } returns systemPropertyValue
             val environmentValueLoader = mockk<EnvironmentVariableLoader>()
             every { environmentValueLoader.get(environmentVariableName) } returns environmentVariableValue
+            val effectiveParameterValue = systemPropertyValue ?: environmentVariableValue;
+            if (effectiveParameterValue != null  && expectedDeserializedValue != null) {
+                every { deserializer.invoke(effectiveParameterValue) } returns expectedDeserializedValue
+            }
 
-            val actualValue = LiquiprimeRuntimeParameter(
+            val actualValue = LiquiprimeDeserializableRuntimeParameter(
                 systemPropertyNameTemplate,
                 environmentVariableNameTemplate,
+                deserializer,
                 systemPropertyLoader,
                 environmentValueLoader
-            ).getValueFor(activityName)
+            ).getDeserializedValueFor(activityName)
 
-            Objects.equals(actualValue, expectedValue).shouldBeTrue()
+            Objects.equals(actualValue, expectedDeserializedValue).shouldBeTrue()
         }
 
         it("""returns null if the parameter represented by the invoking object for the given
-            | activity does not have an associated system property or environment variable""".trimMargin()) {
+            | activity does not have an associated system property or environment variable """.trimMargin()) {
             performTest(
                 systemPropertyValue = null,
                 environmentVariableValue = null,
-                expectedValue = null
+                expectedDeserializedValue = null
             )
         }
 
         it("""returns the value of the parameter represented by the invoking object for the
             | given activity, as defined by the associated system property, if such a property exists""".trimMargin()) {
             performTest(
-                systemPropertyValue = "foo",
+                systemPropertyValue = "1",
                 environmentVariableValue = null,
-                expectedValue = "foo"
+                expectedDeserializedValue = 1
             )
         }
 
@@ -54,8 +64,8 @@ class LiquiprimeRuntimeParameterSpec: DescribeSpec({
             | if an associated system property doesn't exist""".trimMargin()) {
             performTest(
                 systemPropertyValue = null,
-                environmentVariableValue = "foo",
-                expectedValue = "foo"
+                environmentVariableValue = "1",
+                expectedDeserializedValue = 1
             )
         }
 
@@ -63,30 +73,40 @@ class LiquiprimeRuntimeParameterSpec: DescribeSpec({
             | for the given activity, as defined by the associated system property, 
             | if both the property and an associated environment variable exist""".trimMargin()) {
             performTest(
-                systemPropertyValue = "foo",
-                environmentVariableValue = "bar",
-                expectedValue = "foo"
+                systemPropertyValue = "1",
+                environmentVariableValue = "2",
+                expectedDeserializedValue = 1
             )
         }
     }
 
-    describe("getValue") {
-        fun performTest(systemPropertyValue: String?, environmentVariableValue: String?, expectedValue: String?) {
+    describe("getDeserializedValue") {
+        fun <T> performTest(
+            systemPropertyValue: String?,
+            environmentVariableValue: String?,
+            expectedDeserializedValue: T?
+        ) {
             val systemPropertyName = "liquiprime.test"
             val environmentVariableName = "LIQUIPRIME_TEST"
+            val deserializer = mockk<(String) -> T>()
             val systemPropertyLoader = mockk<SystemPropertyLoader>()
             every { systemPropertyLoader.load(systemPropertyName) } returns systemPropertyValue
             val environmentValueLoader = mockk<EnvironmentVariableLoader>()
             every { environmentValueLoader.get(environmentVariableName) } returns environmentVariableValue
+            val effectiveParameterValue = systemPropertyValue ?: environmentVariableValue;
+            if (effectiveParameterValue != null  && expectedDeserializedValue != null) {
+                every { deserializer.invoke(effectiveParameterValue) } returns expectedDeserializedValue
+            }
 
-            val actualValue = LiquiprimeRuntimeParameter(
+            val actualValue = LiquiprimeDeserializableRuntimeParameter(
                 systemPropertyName,
                 environmentVariableName,
+                deserializer,
                 systemPropertyLoader,
                 environmentValueLoader
-            ).getValue()
+            ).getDeserializedValue()
 
-            Objects.equals(actualValue, expectedValue).shouldBeTrue()
+            Objects.equals(actualValue, expectedDeserializedValue).shouldBeTrue()
         }
 
         it("""returns null if the parameter represented by the invoking object
@@ -94,16 +114,16 @@ class LiquiprimeRuntimeParameterSpec: DescribeSpec({
             performTest(
                 systemPropertyValue = null,
                 environmentVariableValue = null,
-                expectedValue = null
+                expectedDeserializedValue = null
             )
         }
 
         it("""returns the value of the parameter represented by the invoking object as defined
             | by the associated system property, if such a property exists""".trimMargin()) {
             performTest(
-                systemPropertyValue = "foo",
+                systemPropertyValue = "1",
                 environmentVariableValue = null,
-                expectedValue = "foo"
+                expectedDeserializedValue = 1
             )
         }
 
@@ -112,8 +132,8 @@ class LiquiprimeRuntimeParameterSpec: DescribeSpec({
             |  if an associated system property doesn't exist""".trimMargin()) {
             performTest(
                 systemPropertyValue = null,
-                environmentVariableValue = "foo",
-                expectedValue = "foo"
+                environmentVariableValue = "1",
+                expectedDeserializedValue = 1
             )
         }
 
@@ -121,9 +141,9 @@ class LiquiprimeRuntimeParameterSpec: DescribeSpec({
             | by the invoking object as defined by the associated system property, 
             | if both the property and an associated environment variable exist""".trimMargin()) {
             performTest(
-                systemPropertyValue = "foo",
-                environmentVariableValue = "bar",
-                expectedValue = "foo"
+                systemPropertyValue = "1",
+                environmentVariableValue = "2",
+                expectedDeserializedValue = 1
             )
         }
     }
